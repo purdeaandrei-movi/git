@@ -262,9 +262,8 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 	changed |= match_stat_data(&ce->ce_stat_data, st);
 
 	/* Racily smudged entry? */
-	if (!ce->ce_stat_data.sd_size) {
-		if (!is_empty_blob_sha1(ce->oid.hash))
-			changed |= DATA_CHANGED;
+	if (ce->ce_stat_data.sd_size == -1) {
+		changed |= DATA_CHANGED;
 	}
 
 	return changed;
@@ -2028,7 +2027,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		 * file, and never calls us, so the cached size information
 		 * for "frotz" stays 6 which does not match the filesystem.
 		 */
-		ce->ce_stat_data.sd_size = 0;
+		ce->ce_stat_data.sd_size = -1;
 	}
 }
 
