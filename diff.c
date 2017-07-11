@@ -2858,8 +2858,6 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 			}
 		}
 		s->size = xsize_t(st.st_size);
-		if (!s->size)
-			goto empty;
 		if (S_ISLNK(st.st_mode)) {
 			struct strbuf sb = STRBUF_INIT;
 
@@ -2894,12 +2892,16 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 			s->is_binary = 1;
 			return 0;
 		}
-		fd = open(s->path, O_RDONLY);
-		if (fd < 0)
-			goto err_empty;
-		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
-		close(fd);
-		s->should_munmap = 1;
+		if (!s->size) {
+			s->data = "";
+		} else {
+			fd = open(s->path, O_RDONLY);
+			if (fd < 0)
+				goto err_empty;
+			s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
+			close(fd);
+			s->should_munmap = 1;
+		}
 
 		/*
 		 * Convert from working tree format to canonical git format
